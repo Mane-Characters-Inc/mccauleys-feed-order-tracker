@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// versionCode / versionName can be stamped by CI from the release tag.
+def resolvedVersionCode = Integer.parseInt(System.getenv("ANDROID_VERSION_CODE") ?: "1")
+def resolvedVersionName = System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
+
 android {
     namespace = "org.manecharacters.feedordertracker"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,9 +11,8 @@ android {
         applicationId "org.manecharacters.feedordertracker"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode / versionName can be stamped by CI from the release tag.
-        versionCode (System.getenv("ANDROID_VERSION_CODE") ?: "1").toInteger()
-        versionName System.getenv("ANDROID_VERSION_NAME") ?: "1.0"
+        versionCode resolvedVersionCode
+        versionName resolvedVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
