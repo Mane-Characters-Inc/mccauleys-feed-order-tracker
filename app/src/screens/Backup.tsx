@@ -32,7 +32,7 @@ export function BackupScreen({
       toast('Couldn’t read that JSON');
     }
   };
-  const doReset = () => { const s = resetState(); setState(s); toast('Reset to sample data'); };
+  const doReset = () => { const s = resetState(); setState(s); toast('Reset — fresh start'); };
   const shareExport = async (filename: string, text: string, type: string, label: string) => {
     const r = await shareOrDownload(filename, text, type);
     toast(r === 'shared' ? `${label} shared` : r === 'downloaded' ? `${label} exported` : 'Export failed');
@@ -81,7 +81,7 @@ export function BackupScreen({
       {card('archive', 'On-device snapshot', 'A local copy is kept so a bad edit can be undone', <Chip tone="teal" icon="check">On</Chip>)}
 
       <div style={{ marginTop: 22 }}>
-        <button onClick={doReset} style={{ width: '100%', padding: '12px', borderRadius: 10, border: `1.5px solid ${C.warm}`, background: 'transparent', color: C.alert, fontFamily: FONT, fontWeight: 700, fontSize: 13, letterSpacing: '0.04em', cursor: 'pointer' }}>Reset to sample data</button>
+        <button onClick={doReset} style={{ width: '100%', padding: '12px', borderRadius: 10, border: `1.5px solid ${C.warm}`, background: 'transparent', color: C.alert, fontFamily: FONT, fontWeight: 700, fontSize: 13, letterSpacing: '0.04em', cursor: 'pointer' }}>Erase all data &amp; start fresh</button>
       </div>
 
       <Sheet open={importOpen} title="Restore from backup" onClose={() => setImportOpen(false)}>

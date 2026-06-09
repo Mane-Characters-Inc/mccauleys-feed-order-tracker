@@ -5,12 +5,14 @@
    ===================================================================== */
 import { describe, it, expect } from 'vitest';
 import {
-  buildSeed, calcUsed, calcSuggested, orderQty, composeMessage,
-  numToWords, roundUpEven, joinList, startNewWeek, isOdd,
+  calcUsed, calcSuggested, orderQty, composeMessage,
+  numToWords, roundUpEven, joinList, startNewWeek, isOdd, formatUsPhone,
+  feedFullName, initialState, nextTuesday,
   type AppState, type Week,
 } from './data';
+import { sampleHistory } from './sampleHistory.fixture';
 
-const state: AppState = buildSeed();
+const state: AppState = sampleHistory();
 const buffer = state.settings.buffer;
 const wk = (date: string): Week => state.weeks.find((w) => w.date === date)!;
 
@@ -141,6 +143,20 @@ describe('§5 / §7 unit behaviors', () => {
     expect(composeMessage(w, state.settings)).toContain('one bag of Top Breeder cubes');
   });
 
+  it('formatUsPhone formats progressively and matches the seeded format', () => {
+    expect(formatUsPhone('')).toBe('');
+    expect(formatUsPhone('8')).toBe('(8');
+    expect(formatUsPhone('859')).toBe('(859');
+    expect(formatUsPhone('859537')).toBe('(859) 537');
+    expect(formatUsPhone('8595372418')).toBe('(859) 537-2418');
+    // already-formatted input is stable (idempotent)
+    expect(formatUsPhone('(859) 537-2418')).toBe('(859) 537-2418');
+    // leading US country code
+    expect(formatUsPhone('18595372418')).toBe('+1 (859) 537-2418');
+    // foreign / extension input is left untouched
+    expect(formatUsPhone('+44 20 7946 0958')).toBe('+44 20 7946 0958');
+  });
+
   it('feeds with order quantity 0 are omitted from the message', () => {
     const w: Week = {
       id: 'x', date: '2026-06-23',
@@ -153,5 +169,44 @@ describe('§5 / §7 unit behaviors', () => {
     const msg = composeMessage(w, state.settings);
     expect(msg).toContain('Top Breeder cubes');
     expect(msg).not.toContain('Original 14');
+  });
+});
+
+describe('feed model — base name + form word', () => {
+  it('feedFullName appends the form word', () => {
+    expect(feedFullName({ name: 'Top Breeder', form: 'cubes' })).toBe('Top Breeder cubes');
+    expect(feedFullName({ name: 'Top Breeder', form: 'pellet' })).toBe('Top Breeder pellets');
+    expect(feedFullName({ name: 'Top Breeder', form: 'textured' })).toBe('Top Breeder textured');
+  });
+
+  it('default feeds are base names with cubes form (compose Appendix B names)', () => {
+    const feeds = initialState().settings.feeds;
+    expect(feeds.map((f) => f.name)).toEqual(['Top Breeder', 'Original 14', 'M10 Balancer', 'Alam']);
+    expect(feeds.every((f) => f.form === 'cubes')).toBe(true);
+    expect(feedFullName(feeds[0])).toBe('Top Breeder cubes');
+  });
+});
+
+describe('initialState — clean install has no history', () => {
+  it('keeps the 4 default feeds but only one empty current week', () => {
+    const s = initialState();
+    expect(s.settings.feeds).toHaveLength(4);
+    expect(s.weeks).toHaveLength(1);
+    const wk0 = s.weeks[0];
+    expect(wk0.sent).toBe(false);
+    // every feed starts uncounted (have = null), no carried numbers
+    expect(Object.values(wk0.feeds).every((c) => c.have === null && c.had === 0 && c.ordered === 0)).toBe(true);
+  });
+
+  it('default reminder is off / Tuesday / 09:00', () => {
+    const r = initialState().settings.reminder;
+    expect(r).toEqual({ enabled: false, weekday: 2, time: '09:00' });
+  });
+
+  it('nextTuesday returns a Tuesday', () => {
+    // 2026-06-15 is a Monday -> next Tuesday 2026-06-16
+    expect(nextTuesday(new Date(2026, 5, 15))).toBe('2026-06-16');
+    // on a Tuesday, returns that day
+    expect(nextTuesday(new Date(2026, 5, 16))).toBe('2026-06-16');
   });
 });

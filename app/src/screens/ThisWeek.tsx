@@ -6,7 +6,7 @@ import { Stepper, Segmented, Chip, SectionLabel, AppButton, Sheet, Toggle } from
 import { FeedCard } from './FeedCard';
 import { GridSheet } from './GridSheet';
 import {
-  activeFeeds, orderQty, isOdd, parseISO, fmtShort, fmtLong, fmtSlash,
+  activeFeeds, orderQty, isOdd, parseISO, fmtShort, fmtLong, fmtSlash, feedFullName,
   saveState, ACCOUNT_LABEL, type AppState, type Account, type Oil,
 } from '../lib/data';
 
@@ -131,7 +131,7 @@ export function ThisWeekScreen({
             const odd = isOdd(l.q);
             return (
               <div key={l.f.code} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: FONT }}>
-                <span style={{ fontSize: 14 }}>{l.f.name}</span>
+                <span style={{ fontSize: 14 }}>{feedFullName(l.f)}</span>
                 <span style={{ fontSize: 15, fontWeight: 700, color: odd ? '#F2A88F' : C.tealLight }}>{l.q}{odd ? ' ⚠' : ''}</span>
               </div>
             );

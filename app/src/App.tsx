@@ -11,6 +11,7 @@ import { HistoryScreen } from './screens/History';
 import { BackupScreen } from './screens/Backup';
 import { SettingsScreen } from './screens/Settings';
 import { loadState, saveState, startNewWeek, type AppState } from './lib/data';
+import { syncOrderReminder } from './lib/notifications';
 
 const UI_KEY = 'mc_feed_tracker_ui';
 interface UiPrefs { layout: 'cards' | 'grid'; oilReminder: boolean }
@@ -33,6 +34,10 @@ export function App() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch { /* ignore */ } }, [ui]);
+
+  // On launch, make the OS reminder schedule match saved settings (e.g. after
+  // a reinstall). No-ops in the browser preview. Runs once.
+  useEffect(() => { void syncOrderReminder(state.settings.reminder); /* eslint-disable-line react-hooks/exhaustive-deps */ }, []);
 
   const toast = (m: string) => {
     setToastMsg(m);

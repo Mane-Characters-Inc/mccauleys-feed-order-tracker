@@ -18,10 +18,35 @@ export interface FeedCell {
   overridden: boolean;
 }
 
+/** Physical form of a feed. Mane Characters uses cubes by default, but each
+    feed can be set to pellet or textured. The form word is appended to the
+    base name in composed messages (BUILD_SPEC §3.2). */
+export type FeedForm = 'cubes' | 'pellet' | 'textured';
+
 export interface Feed {
   code: string;
-  name: string;
+  name: string;        // base name, e.g. "Top Breeder" (no form word)
   active: boolean;
+  form: FeedForm;      // cubes | pellet | textured
+  url?: string;        // optional manufacturer page / spec-sheet PDF link
+}
+
+/** The word appended to a feed's base name in messages/labels. */
+export const FORM_WORD: Record<FeedForm, string> = {
+  cubes: 'cubes',
+  pellet: 'pellets',
+  textured: 'textured',
+};
+export const FORM_OPTIONS: { value: FeedForm; label: string }[] = [
+  { value: 'cubes', label: 'Cubes' },
+  { value: 'pellet', label: 'Pellets' },
+  { value: 'textured', label: 'Textured' },
+];
+/** Full feed name as it must appear in messages, e.g. "Top Breeder cubes". */
+export function feedFullName(feed: { name: string; form?: FeedForm }): string {
+  const word = FORM_WORD[feed.form || 'cubes'];
+  const base = (feed.name || '').trim();
+  return word ? `${base} ${word}` : base;
 }
 
 export interface Contact {
@@ -40,6 +65,14 @@ export interface SupplierLink {
   icon: string;
 }
 
+/** Weekly order reminder. weekday uses JS convention: 0=Sun … 2=Tue … 6=Sat.
+    time is "HH:MM" 24h. Notifications fire on-device (offline) when enabled. */
+export interface Reminder {
+  enabled: boolean;
+  weekday: number; // 0–6, Sunday = 0
+  time: string;    // "HH:MM"
+}
+
 export interface Settings {
   buffer: number;
   supplierName: string;
@@ -47,9 +80,13 @@ export interface Settings {
   links: SupplierLink[];
   oilDefaultAccount: Account;
   feeds: Feed[];
+  reminder: Reminder;
   /** legacy single-phone field, migrated into contacts on load */
   supplierPhone?: string;
 }
+
+/** Default weekly reminder — off, Tuesday, 9:00 AM (user-editable). */
+export const DEFAULT_REMINDER: Reminder = { enabled: false, weekday: 2, time: '09:00' };
 
 export interface Oil {
   on: boolean;
@@ -76,10 +113,10 @@ export interface AppState {
    active worksheet and future orders, but every past week that referenced it
    keeps its record. Names are always resolvable from here (active or archived). */
 export const DEFAULT_FEEDS: Feed[] = [
-  { code: 'tb', name: 'Top Breeder cubes', active: true },
-  { code: 'o', name: 'Original 14 cubes', active: true },
-  { code: 'm', name: 'M10 Balancer cubes', active: true },
-  { code: 'a', name: 'Alam cubes', active: true },
+  { code: 'tb', name: 'Top Breeder', active: true, form: 'cubes', url: '' },
+  { code: 'o', name: 'Original 14', active: true, form: 'cubes', url: '' },
+  { code: 'm', name: 'M10 Balancer', active: true, form: 'cubes', url: '' },
+  { code: 'a', name: 'Alam', active: true, form: 'cubes', url: '' },
 ];
 
 /* Supplier contacts. Each has its own allowed actions:
@@ -109,6 +146,7 @@ export const DEFAULT_SETTINGS: Settings = {
   links: DEFAULT_LINKS.map((l) => ({ ...l })),
   oilDefaultAccount: 'mane',
   feeds: DEFAULT_FEEDS.map((f) => ({ ...f })),
+  reminder: { ...DEFAULT_REMINDER },
 };
 
 // the contact the weekly order is texted to
@@ -140,11 +178,13 @@ export function weekFeedList(week: Week, settings: Settings): Feed[] {
   return settings.feeds.filter((f) => week.feeds[f.code] !== undefined);
 }
 export function feedMeta(settings: Settings, code: string): Feed {
-  return settings.feeds.find((f) => f.code === code) || { code, name: code, active: false };
+  return settings.feeds.find((f) => f.code === code) || { code, name: code, active: false, form: 'cubes' };
 }
-// Display label for tight spots (grid headers, history chips): drop trailing "cubes".
+// Display label for tight spots (grid headers, history chips): the base name,
+// without the form word. (Names no longer carry the form word, but strip a
+// trailing form word defensively in case of older data.)
 export function shortLabel(name: string): string {
-  return (name || '').replace(/\s*cubes\s*$/i, '').trim() || (name || '');
+  return (name || '').replace(/\s*(cubes|pellets?|textured)\s*$/i, '').trim() || (name || '');
 }
 // Internal id for a new feed, derived from its name (the old tb/o/a/m codes are
 // retired — ids are never shown to the user, they just key the records).
@@ -216,7 +256,7 @@ export function composeMessage(week: Week, settings: Settings): string {
     const cell = week.feeds[f.code];
     if (!cell) return;
     const q = orderQty(cell, settings.buffer);
-    if (q > 0) items.push(`${numToWords(q)} ${q === 1 ? 'bag' : 'bags'} of ${f.name}`);
+    if (q > 0) items.push(`${numToWords(q)} ${q === 1 ? 'bag' : 'bags'} of ${feedFullName(f)}`);
   });
   const paras: string[] = [];
   paras.push(`Can we please get ${joinList(items)}? Please split the order and bill half to Maplehurst and half to Mane Characters.`);
@@ -258,60 +298,53 @@ export function fmtSlash(iso: string): string {
   return `${dt.getMonth() + 1}/${dt.getDate()}/${String(dt.getFullYear()).slice(2)}`;
 }
 
-/* ---- seed data (spec Appendix A + active week) -------------------- */
+/* ---- initial state for a fresh install ----------------------------- */
 function cell(had: number, ordered: number, have: number | null, orderSent: number | null, overridden?: boolean): FeedCell {
   return { had, ordered, have, orderSent, overridden: !!overridden };
 }
-export function buildSeed(): AppState {
+// The next Tuesday on/after `from` (today, if today is Tuesday). Orders go out
+// Tuesdays; this is just the editable default for a brand-new week.
+export function nextTuesday(from: Date = new Date()): string {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const add = (2 - d.getDay() + 7) % 7; // 0 if already Tuesday
+  d.setDate(d.getDate() + add);
+  return toISO(d);
+}
+// A clean starting state: default settings/feeds + one empty current week.
+// No historical data is baked into the app; past orders accrue as the user
+// sends them (or are restored from a JSON backup).
+export function initialState(): AppState {
   const settings: Settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   settings.links = DEFAULT_LINKS.map((l) => ({ ...l }));
-  const wk = (date: string, feeds: Record<string, FeedCell>, oil: Oil | undefined, sent: boolean): Week => ({
-    id: date, date, feeds, oil: oil || { on: false, account: 'mane' }, message: null, messageEdited: false, sent,
-  });
-
-  // 5/26 — sent. Actual sent order (Appendix B) = tb6 o8 m2 a2. o/m/a were
-  // judgment calls that differ from the raw suggestion, so stored as overrides.
-  const w0 = wk('2026-05-26', {
-    tb: cell(11, 10, 9, 6, false),
-    o: cell(12, 14, 13, 8, true),
-    m: cell(3, 2, 2, 2, true),
-    a: cell(1, 0, 0, 2, true),
-  }, { on: false, account: 'mane' }, true);
-  w0.message = composeMessage(w0, settings);
-
-  // 6/2 — sent, oil ON (Mane Characters). Actual sent order (Appendix B) =
-  // tb8 o6 m2 (a omitted). o bumped from suggested 4 → 6 (judgment override).
-  const w1 = wk('2026-06-02', {
-    tb: cell(9, 6, 5, 8, false),
-    o: cell(14, 8, 10, 6, true),
-    m: cell(2, 2, 2, 2, false),
-    a: cell(0, 2, 2, 0, false),
-  }, { on: true, account: 'mane' }, true);
-  w1.message = composeMessage(w1, settings);
-
-  // 6/9 — sent. m bumped 2→4, alam dropped 2→0 (manual overrides per spec note)
-  const w2 = wk('2026-06-09', {
-    tb: cell(5, 8, 2, 12, false),
-    o: cell(10, 6, 5, 8, false),
-    m: cell(2, 2, 2, 4, true),
-    a: cell(2, 0, 1, 0, true),
-  }, { on: false, account: 'mane' }, true);
-  w2.message = composeMessage(w2, settings);
-
-  // 6/16 — ACTIVE (carried from 6/9, today's counts entered, not yet sent)
-  const w3 = wk('2026-06-16', {
-    tb: cell(2, 12, 4, null, false),
-    o: cell(5, 8, 6, null, false),
-    m: cell(2, 4, 3, null, false),
-    a: cell(1, 0, 1, null, false),
-  }, { on: false, account: 'mane' }, false);
-
-  return { settings, weeks: [w0, w1, w2, w3] };
+  const feeds: Record<string, FeedCell> = {};
+  activeFeeds(settings).forEach((f) => { feeds[f.code] = cell(0, 0, null, null, false); });
+  const date = nextTuesday();
+  const week: Week = { id: date, date, feeds, oil: { on: false, account: settings.oilDefaultAccount }, message: null, messageEdited: false, sent: false };
+  return { settings, weeks: [week] };
 }
 
 /* ---- phone actions + vCard ---------------------------------------- */
 export function phoneDigits(phone: string): string {
   return (phone || '').replace(/[^\d+]/g, '');
+}
+/* Progressive US phone formatting for as-you-type entry, e.g.
+   8595372418 -> "(859) 537-2418". Leaves foreign/extension numbers
+   (anything that isn't a plain <=11-digit US number) untouched so the
+   user can still type them. */
+export function formatUsPhone(input: string): string {
+  if (!input) return '';
+  const trimmed = input.trim();
+  const hasPlus = trimmed.startsWith('+');
+  // Foreign international (not +1) — don't fight the user.
+  if (hasPlus && !trimmed.startsWith('+1')) return input;
+  let d = trimmed.replace(/\D/g, '');
+  let prefix = '';
+  if (d.length === 11 && d.startsWith('1')) { prefix = '+1 '; d = d.slice(1); }
+  if (d.length > 10) return input; // too long for US format — leave as typed
+  if (d.length === 0) return hasPlus ? input : '';
+  if (d.length <= 3) return `${prefix}(${d}`;
+  if (d.length <= 6) return `${prefix}(${d.slice(0, 3)}) ${d.slice(3)}`;
+  return `${prefix}(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
 }
 export function telHref(phone: string): string {
   return 'tel:' + phoneDigits(phone);
@@ -337,10 +370,25 @@ export function vcardFor(contact: Contact, org?: string): string {
 
 /* ---- normalize older/partial saved state -------------------------- */
 export function normalizeState(state: AppState | null | undefined): AppState {
-  if (!state || !state.settings || !state.weeks) return buildSeed();
+  if (!state || !state.settings || !state.weeks) return initialState();
   const s = state;
-  // feeds get an active flag
-  (s.settings.feeds || []).forEach((f) => { if (f.active === undefined) f.active = true; });
+  // feeds: active flag, and the form/url model. Older feeds stored the form
+  // word inside the name (e.g. "Top Breeder cubes"); split it out so the form
+  // selector and message composition work, without changing the message text.
+  (s.settings.feeds || []).forEach((f) => {
+    if (f.active === undefined) f.active = true;
+    if (!f.form) {
+      const m = (f.name || '').match(/\s*(cubes|pellets?|textured)\s*$/i);
+      if (m) {
+        const word = m[1].toLowerCase();
+        f.form = word.startsWith('pellet') ? 'pellet' : (word === 'textured' ? 'textured' : 'cubes');
+        f.name = (f.name || '').replace(/\s*(cubes|pellets?|textured)\s*$/i, '').trim();
+      } else {
+        f.form = 'cubes';
+      }
+    }
+    if (f.url === undefined) f.url = '';
+  });
   // migrate to contacts model
   if (!Array.isArray(s.settings.contacts)) {
     const legacy = s.settings.supplierPhone;
@@ -348,6 +396,8 @@ export function normalizeState(state: AppState | null | undefined): AppState {
     if (legacy) s.settings.contacts[0].phone = legacy;
   }
   if (!Array.isArray(s.settings.links)) s.settings.links = DEFAULT_LINKS.map((l) => ({ ...l }));
+  // weekly reminder defaults (off, Tuesday, 09:00)
+  if (!s.settings.reminder) s.settings.reminder = { ...DEFAULT_REMINDER };
   return s;
 }
 
@@ -357,9 +407,9 @@ export function loadState(): AppState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) return normalizeState(JSON.parse(raw));
   } catch {
-    /* ignore — fall through to seed */
+    /* ignore — fall through to a clean start */
   }
-  return buildSeed();
+  return initialState();
 }
 export function saveState(state: AppState): void {
   try {
@@ -374,7 +424,7 @@ export function resetState(): AppState {
   } catch {
     /* no-op */
   }
-  return buildSeed();
+  return initialState();
 }
 
 /* ---- start a new week (carry-forward, spec §4.3) ------------------ */
@@ -401,7 +451,7 @@ export function exportJSON(state: AppState): string {
   return JSON.stringify(state, null, 2);
 }
 export function exportCSV(state: AppState): string {
-  const rows: (string | number)[][] = [['date', 'feed_code', 'feed_name', 'active', 'had', 'ordered', 'have', 'used', 'order_sent', 'overridden', 'oil', 'oil_account', 'message']];
+  const rows: (string | number)[][] = [['date', 'feed_code', 'feed_name', 'feed_form', 'feed_url', 'active', 'had', 'ordered', 'have', 'used', 'order_sent', 'overridden', 'oil', 'oil_account', 'message']];
   state.weeks.forEach((w) => {
     weekFeedList(w, state.settings).forEach((f) => {
       const c = w.feeds[f.code];
@@ -409,7 +459,7 @@ export function exportCSV(state: AppState): string {
       const used = calcUsed(c);
       const q = orderQty(c, state.settings.buffer);
       rows.push([
-        fmtSlash(w.date), f.code, f.name, f.active === false ? 'archived' : 'active',
+        fmtSlash(w.date), f.code, feedFullName(f), f.form || 'cubes', f.url || '', f.active === false ? 'archived' : 'active',
         c.had, c.ordered,
         c.have === null ? '' : c.have, used === null ? '' : used, q,
         c.overridden ? 'yes' : 'no',

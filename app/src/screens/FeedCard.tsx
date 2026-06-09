@@ -2,7 +2,8 @@
 import { C, FONT } from '../ui/tokens';
 import { AppIcon } from '../ui/icons';
 import { Stepper } from '../ui/primitives';
-import { calcUsed, calcSuggested, orderQty, isOdd, type Feed, type FeedCell } from '../lib/data';
+import { calcUsed, calcSuggested, orderQty, isOdd, feedFullName, type Feed, type FeedCell } from '../lib/data';
+import { openLink } from '../lib/platform';
 
 export function FeedCard({
   feed, cell, buffer, overrideColor = C.gold, onEntry, onOrder, onRevert, onEditCarried,
@@ -20,8 +21,14 @@ export function FeedCard({
   return (
     <div style={{ background: C.white, borderRadius: 14, boxShadow: '0 2px 8px rgba(44,26,62,0.07)', overflow: 'hidden', border: odd ? `1.5px solid ${C.alert}` : '1px solid rgba(44,26,62,0.05)' }}>
       {/* header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px 0' }}>
-        <div style={{ fontFamily: FONT, fontWeight: 600, fontSize: 17, color: C.purple }}>{feed.name}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px 0', gap: 8 }}>
+        <div style={{ fontFamily: FONT, fontWeight: 600, fontSize: 17, color: C.purple }}>{feedFullName(feed)}</div>
+        {feed.url && feed.url.trim() && (
+          <button onClick={() => openLink(feed.url!.trim())} aria-label={`Open ${feed.name} manufacturer page`}
+            style={{ background: C.whisperP, border: 0, borderRadius: 8, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <AppIcon name="external" size={15} color={C.purple} />
+          </button>
+        )}
       </div>
 
       {/* carried strip */}

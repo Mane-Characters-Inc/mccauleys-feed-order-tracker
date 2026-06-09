@@ -5,10 +5,12 @@ import { C, FONT, DISPLAY } from '../ui/tokens';
 import { AppIcon } from '../ui/icons';
 import { SectionLabel, Segmented, AppButton, Sheet, Toggle, HoldButton } from '../ui/primitives';
 import {
-  activeFeeds, slugifyFeed, telHref, smsHref,
-  saveState, type AppState, type Account, type FeedCell,
+  activeFeeds, slugifyFeed, telHref, smsHref, formatUsPhone, feedFullName,
+  FORM_OPTIONS, DOW,
+  saveState, type AppState, type Account, type FeedCell, type FeedForm, type Reminder,
 } from '../lib/data';
 import { downloadVCard, openLink } from '../lib/platform';
+import { syncOrderReminder, remindersSupported } from '../lib/notifications';
 
 const emptyCell = (): FeedCell => ({ had: 0, ordered: 0, have: null, orderSent: null, overridden: false });
 
@@ -21,8 +23,16 @@ export function SettingsScreen({
 }) {
   const { settings } = state;
   const [feedSheet, setFeedSheet] = useState<string | null>(null); // code | 'new'
-  const [draft, setDraft] = useState<{ code: string; name: string }>({ code: '', name: '' });
+  const [draft, setDraft] = useState<{ code: string; name: string; form: FeedForm; url: string }>({ code: '', name: '', form: 'cubes', url: '' });
   const mutate = (fn: (s: AppState) => void) => { const s: AppState = JSON.parse(JSON.stringify(state)); fn(s); saveState(s); setState(s); };
+
+  // weekly order reminder (settings.reminder) — re-sync the OS schedule on change
+  const reminder: Reminder = settings.reminder;
+  const setReminder = (patch: Partial<Reminder>) => {
+    const next = { ...reminder, ...patch };
+    mutate((s) => { s.settings.reminder = next; });
+    void syncOrderReminder(next);
+  };
 
   const active = activeFeeds(settings);
   const archived = settings.feeds.filter((f) => f.active === false);
@@ -58,13 +68,14 @@ export function SettingsScreen({
   const saveFeed = () => {
     const name = draft.name.trim();
     if (!name) return;
+    const url = draft.url.trim();
     mutate((s) => {
       if (feedSheet !== 'new') {
         const ex = s.settings.feeds.find((f) => f.code === feedSheet);
-        if (ex) { ex.name = name; ex.active = true; }
+        if (ex) { ex.name = name; ex.form = draft.form; ex.url = url; ex.active = true; }
       } else {
         const code = slugifyFeed(name, s.settings.feeds);
-        s.settings.feeds.push({ code, name, active: true });
+        s.settings.feeds.push({ code, name, active: true, form: draft.form, url });
         // add only to the current (not-yet-sent) week — never backfill history
         const last = s.weeks[s.weeks.length - 1];
         if (last && !last.sent) last.feeds[code] = emptyCell();
@@ -82,7 +93,6 @@ export function SettingsScreen({
 
   const block = (children: ReactNode) => <div style={{ background: C.white, borderRadius: 14, boxShadow: '0 2px 8px rgba(44,26,62,0.07)', overflow: 'hidden' }}>{children}</div>;
   const rowStyle: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 15px', gap: 12 };
-  const inputStyle: CSSProperties = { padding: '9px 12px', borderRadius: 9, border: `1.5px solid ${C.warm}`, fontFamily: FONT, fontSize: 15, color: C.ink, textAlign: 'right', minWidth: 0 };
 
   return (
     <div style={{ padding: '16px 16px 28px' }}>
@@ -110,28 +120,49 @@ export function SettingsScreen({
         </div>
       </>)}
 
+      <SectionLabel style={{ margin: '22px 0 10px' }}>Weekly order reminder</SectionLabel>
+      {block(<>
+        <div style={rowStyle}>
+          <div><div style={{ fontFamily: FONT, fontWeight: 600, fontSize: 15, color: C.ink }}>Remind me to order</div><div style={{ fontSize: 12, color: C.gray, marginTop: 1 }}>A weekly notification on this phone</div></div>
+          <Toggle on={reminder.enabled} onChange={(v) => setReminder({ enabled: v })} />
+        </div>
+        {reminder.enabled && (<>
+          <div style={{ ...rowStyle, borderTop: '1px solid rgba(44,26,62,0.06)' }}>
+            <span style={{ fontFamily: FONT, fontWeight: 600, fontSize: 15, color: C.ink }}>Day</span>
+            <select value={reminder.weekday} onChange={(e) => setReminder({ weekday: Number(e.target.value) })}
+              style={{ padding: '9px 12px', borderRadius: 9, border: `1.5px solid ${C.warm}`, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.white }}>
+              {DOW.map((d, i) => <option key={d} value={i}>{d}</option>)}
+            </select>
+          </div>
+          <div style={{ ...rowStyle, borderTop: '1px solid rgba(44,26,62,0.06)' }}>
+            <span style={{ fontFamily: FONT, fontWeight: 600, fontSize: 15, color: C.ink }}>Time</span>
+            <input type="time" value={reminder.time} onChange={(e) => { if (e.target.value) setReminder({ time: e.target.value }); }}
+              style={{ padding: '9px 12px', borderRadius: 9, border: `1.5px solid ${C.warm}`, fontFamily: FONT, fontSize: 15, color: C.ink, background: C.white }} />
+          </div>
+        </>)}
+      </>)}
+      <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>
+        {remindersSupported()
+          ? 'The reminder fires on this device, even offline. Android may ask permission to post notifications the first time.'
+          : 'Reminders fire on the installed Android app. (In this preview they’re configured but won’t actually notify.)'}
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '22px 0 10px' }}>
-        <SectionLabel style={{ margin: 0 }}>Supplier contacts</SectionLabel>
+        <SectionLabel style={{ margin: 0 }}>McCauley’s contacts</SectionLabel>
         <button onClick={saveAllContacts} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 0, cursor: 'pointer', color: C.teal, fontFamily: FONT, fontWeight: 700, fontSize: 13 }}><AppIcon name="userPlus" size={16} color={C.teal} /> Save all</button>
       </div>
-      {block(
-        <div style={rowStyle}>
-          <span style={{ fontFamily: FONT, fontWeight: 600, fontSize: 15, color: C.ink }}>Supplier name</span>
-          <input value={settings.supplierName} onChange={(e) => mutate((s) => { s.settings.supplierName = e.target.value; })} style={{ ...inputStyle, flex: 1 }} />
-        </div>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 11 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
         {(settings.contacts || []).map((c) => {
           const cap = c.canCall && c.canText ? 'Call or text' : (c.canCall ? 'Call only' : 'Text only');
           const has = !!(c.phone && c.phone.trim());
           return (
             <div key={c.id} style={{ background: C.white, borderRadius: 14, boxShadow: '0 2px 8px rgba(44,26,62,0.07)', padding: '13px 15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-                <input value={c.name} onChange={(e) => setContact(c.id, 'name', e.target.value)} placeholder={c.role || 'Contact name'} style={{ flex: 1, border: 0, borderBottom: `1.5px solid ${C.whisperP}`, padding: '4px 0', fontFamily: FONT, fontSize: 15.5, fontWeight: 600, color: C.ink, minWidth: 0 }} />
+                <input value={c.name} onChange={(e) => setContact(c.id, 'name', e.target.value)} placeholder="Add a name" style={{ flex: 1, border: 0, borderBottom: `1.5px solid ${C.warm}`, padding: '4px 0', fontFamily: FONT, fontSize: 15.5, fontWeight: 600, color: C.ink, minWidth: 0 }} />
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: C.whisperP, color: C.purple, borderRadius: 999, padding: '4px 10px', fontSize: 11.5, fontWeight: 700, letterSpacing: '0.02em' }}>{cap}</span>
               </div>
               <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: C.gray, marginBottom: 6 }}>{c.role}</div>
-              <input value={c.phone} onChange={(e) => setContact(c.id, 'phone', e.target.value)} placeholder={c.name && c.name.trim() ? 'Phone number' : 'Add a cell number'} inputMode="tel"
+              <input value={c.phone} onChange={(e) => setContact(c.id, 'phone', formatUsPhone(e.target.value))} placeholder="Phone number" inputMode="tel"
                 style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 9, border: `1.5px solid ${C.warm}`, fontFamily: FONT, fontSize: 15, color: C.ink }} />
               <div style={{ display: 'flex', gap: 9, marginTop: 10 }}>
                 {c.canCall && <a href={has ? telHref(c.phone) : undefined} onClick={(e) => { if (!has) { e.preventDefault(); toast('Add a number first'); } else { toast('Opening dialer…'); } }} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px', borderRadius: 9, textDecoration: 'none', border: `1.5px solid ${C.warm}`, background: C.white, color: C.purple, fontFamily: FONT, fontWeight: 800, fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', opacity: has ? 1 : 0.5 }}><AppIcon name="phone" size={15} color={C.purple} stroke={2.2} /> Call</a>}
@@ -166,7 +197,7 @@ export function SettingsScreen({
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '22px 0 10px' }}>
         <SectionLabel style={{ margin: 0 }}>Active feeds &amp; order</SectionLabel>
-        <button onClick={() => { setDraft({ code: '', name: '' }); setFeedSheet('new'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 0, cursor: 'pointer', color: C.teal, fontFamily: FONT, fontWeight: 700, fontSize: 13 }}><AppIcon name="plusCircle" size={16} color={C.teal} /> Add feed</button>
+        <button onClick={() => { setDraft({ code: '', name: '', form: 'cubes', url: '' }); setFeedSheet('new'); }} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 0, cursor: 'pointer', color: C.teal, fontFamily: FONT, fontWeight: 700, fontSize: 13 }}><AppIcon name="plusCircle" size={16} color={C.teal} /> Add feed</button>
       </div>
       {block(active.length === 0
         ? <div style={{ padding: '16px', fontSize: 13.5, color: C.gray, fontFamily: FONT, textAlign: 'center' }}>No active feeds. Add one to start ordering.</div>
@@ -176,8 +207,8 @@ export function SettingsScreen({
               <button onClick={() => move(f.code, -1)} disabled={i === 0} aria-label="Move up" style={{ background: 'none', border: 0, cursor: i === 0 ? 'default' : 'pointer', opacity: i === 0 ? 0.25 : 1, padding: 0, lineHeight: 0 }}><AppIcon name="chevDown" size={16} color={C.purpleLight} style={{ transform: 'rotate(180deg)' }} /></button>
               <button onClick={() => move(f.code, 1)} disabled={i === active.length - 1} aria-label="Move down" style={{ background: 'none', border: 0, cursor: i === active.length - 1 ? 'default' : 'pointer', opacity: i === active.length - 1 ? 0.25 : 1, padding: 0, lineHeight: 0 }}><AppIcon name="chevDown" size={16} color={C.purpleLight} /></button>
             </div>
-            <span style={{ flex: 1, fontFamily: FONT, fontSize: 15, color: C.ink, fontWeight: 500 }}>{f.name}</span>
-            <button onClick={() => { setDraft({ code: f.code, name: f.name }); setFeedSheet(f.code); }} style={{ background: C.whisperP, border: 0, borderRadius: 8, height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.purple, fontFamily: FONT, fontWeight: 700, fontSize: 12 }}><AppIcon name="edit" size={14} color={C.purple} /> Manage</button>
+            <span style={{ flex: 1, fontFamily: FONT, fontSize: 15, color: C.ink, fontWeight: 500 }}>{feedFullName(f)}</span>
+            <button onClick={() => { setDraft({ code: f.code, name: f.name, form: f.form || 'cubes', url: f.url || '' }); setFeedSheet(f.code); }} style={{ background: C.whisperP, border: 0, borderRadius: 8, height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.purple, fontFamily: FONT, fontWeight: 700, fontSize: 12 }}><AppIcon name="edit" size={14} color={C.purple} /> Manage</button>
           </div>
         )))}
       <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>Order here sets the order in the text message. “Cubes” stays in every name. Removing a feed <b style={{ color: C.ink }}>archives</b> it — its past orders are always kept.</div>
@@ -187,9 +218,9 @@ export function SettingsScreen({
         {block(archived.map((f, i) => (
           <div key={f.code} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 13px', borderBottom: i < archived.length - 1 ? '1px solid rgba(44,26,62,0.06)' : 0, opacity: 0.85 }}>
             <AppIcon name="archive" size={17} color={C.purpleLight} />
-            <span style={{ flex: 1, fontFamily: FONT, fontSize: 15, color: C.gray, fontWeight: 500 }}>{f.name}</span>
+            <span style={{ flex: 1, fontFamily: FONT, fontSize: 15, color: C.gray, fontWeight: 500 }}>{feedFullName(f)}</span>
             <button onClick={() => reactivateFeed(f.code)} style={{ background: C.whisperT, border: 0, borderRadius: 8, height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.teal, fontFamily: FONT, fontWeight: 700, fontSize: 12 }}><AppIcon name="refresh" size={14} color={C.teal} /> Reactivate</button>
-            <button onClick={() => { setDraft({ code: f.code, name: f.name }); setFeedSheet(f.code); }} aria-label="Manage feed" style={{ background: C.whisperP, border: 0, borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><AppIcon name="chev" size={15} color={C.purpleLight} /></button>
+            <button onClick={() => { setDraft({ code: f.code, name: f.name, form: f.form || 'cubes', url: f.url || '' }); setFeedSheet(f.code); }} aria-label="Manage feed" style={{ background: C.whisperP, border: 0, borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><AppIcon name="chev" size={15} color={C.purpleLight} /></button>
           </div>
         )))}
         <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>Archived feeds stay out of new orders but remain in every past week and export.</div>
@@ -198,11 +229,31 @@ export function SettingsScreen({
       <Sheet open={!!feedSheet} title={feedSheet === 'new' ? 'Add a feed' : (editing && editing.active === false ? 'Archived feed' : 'Manage feed')} onClose={() => setFeedSheet(null)}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 700, color: C.gray, fontFamily: FONT, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Feed name (exactly as it appears in messages)</label>
-            <input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="e.g. Senior Balancer cubes"
+            <label style={{ fontSize: 12, fontWeight: 700, color: C.gray, fontFamily: FONT, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Feed name</label>
+            <input value={draft.name} onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))} placeholder="e.g. Senior Balancer"
               style={{ width: '100%', boxSizing: 'border-box', marginTop: 6, padding: '12px 13px', borderRadius: 10, border: `1.5px solid ${C.warm}`, fontFamily: FONT, fontSize: 16, color: C.ink }} />
-            <div style={{ fontSize: 11.5, color: C.gray, marginTop: 6, lineHeight: 1.5 }}>Include the word “cubes”. {feedSheet !== 'new' ? 'Renaming applies to future orders; past orders keep what was actually sent.' : 'It joins this week’s order going forward — past weeks are untouched.'}</div>
+            <div style={{ fontSize: 11.5, color: C.gray, marginTop: 6, lineHeight: 1.5 }}>Just the name. The form word below is added automatically. {feedSheet !== 'new' ? 'Renaming applies to future orders; past orders keep what was actually sent.' : 'It joins this week’s order going forward, and past weeks are untouched.'}</div>
           </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: C.gray, fontFamily: FONT, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Form</label>
+            <div style={{ marginTop: 6 }}>
+              <Segmented<FeedForm> value={draft.form} onChange={(v) => setDraft((d) => ({ ...d, form: v }))} options={FORM_OPTIONS} />
+            </div>
+            <div style={{ fontSize: 11.5, color: C.gray, marginTop: 6, lineHeight: 1.5 }}>Shows in the order as “<b style={{ color: C.ink }}>{(draft.name.trim() || 'Feed name')} {FORM_OPTIONS.find((o) => o.value === draft.form)?.label.toLowerCase()}</b>”.</div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 700, color: C.gray, fontFamily: FONT, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Manufacturer link (optional)</label>
+            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+              <input value={draft.url} onChange={(e) => setDraft((d) => ({ ...d, url: e.target.value }))} placeholder="https://… page or PDF" inputMode="url"
+                style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', padding: '12px 13px', borderRadius: 10, border: `1.5px solid ${C.warm}`, fontFamily: FONT, fontSize: 15, color: C.ink }} />
+              <button onClick={() => { const u = draft.url.trim(); if (!u) { toast('Paste a link first'); return; } openLink(u); }} aria-label="Open link"
+                style={{ flexShrink: 0, background: C.whisperP, border: 0, borderRadius: 10, width: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', opacity: draft.url.trim() ? 1 : 0.5 }}><AppIcon name="external" size={18} color={C.purple} /></button>
+            </div>
+            <div style={{ fontSize: 11.5, color: C.gray, marginTop: 6, lineHeight: 1.5 }}>Paste the manufacturer’s product page or spec-sheet PDF, if you want quick access to it.</div>
+          </div>
+
           <AppButton variant="primary" full icon="check" onClick={saveFeed} disabled={!draft.name.trim()}>{feedSheet === 'new' ? 'Add feed' : 'Save changes'}</AppButton>
 
           {editing && editing.active !== false && (
