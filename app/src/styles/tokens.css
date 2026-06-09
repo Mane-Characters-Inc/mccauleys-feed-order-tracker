@@ -1,0 +1,72 @@
+/* =====================================================================
+   Mane Characters — design tokens + global resets (Feed Order Tracker)
+   Mirrors _ds/colors_and_type.css, trimmed to what the app uses, with
+   self-hosted display fonts served from /public/fonts.
+   ===================================================================== */
+
+@font-face {
+  font-family: 'Britannic Bold';
+  src: url('/fonts/britannic_bold_regular.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'American Captain';
+  src: url('/fonts/american_captain.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* primary brand colors — locked */
+  --mc-purple: #69428A;
+  --mc-purple-deep: #2C1A3E;
+  --mc-purple-light: #B4A0C5;
+  --mc-teal: #108A81;
+  --mc-teal-bright: #14A99F;
+  --mc-teal-light: #8CD4CF;
+  --mc-gold: #C9A84C;
+  --mc-alert: #C0492F;
+  --mc-alert-soft: #FBEDE9;
+  --mc-off: #F9F8F8;
+  --mc-white: #FFFFFF;
+  --mc-ink: #221A2B;
+  --mc-gray: #585858;
+  --mc-warm: #D7CCCC;
+  --mc-whisper-p: #F5F0FA;
+  --mc-whisper-t: #E8F7F6;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; padding: 0; height: 100%; }
+
+body {
+  font-family: 'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--mc-purple-deep);
+  color: var(--mc-ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* hide number input spinners — steppers handle increment */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+input, textarea, button, select { font-family: inherit; outline: none; }
+input:focus, textarea:focus {
+  border-color: var(--mc-purple) !important;
+  box-shadow: 0 0 0 3px rgba(105, 66, 138, 0.18);
+}
+
+/* thin scrollbars inside the app */
+.mc-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+@keyframes mcFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mcRise { from { transform: translateY(24px); } to { transform: translateY(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

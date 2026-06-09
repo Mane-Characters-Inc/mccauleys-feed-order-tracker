@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+app/dist/
+dist/
+*.tsbuildinfo
+
+# Redundant binary (the unpacked prototype lives in "App Design Focus/")
+App Design Focus.zip
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

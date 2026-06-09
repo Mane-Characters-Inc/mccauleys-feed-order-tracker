@@ -1,0 +1,256 @@
+/* =====================================================================
+   Mane Characters — Design Tokens
+   Colors, Typography, Spacing, Radii, Shadows
+   ---------------------------------------------------------------------
+   Single source of truth for visual primitives across the brand.
+   Import this file before any brand component CSS.
+   ===================================================================== */
+
+/* === SELF-HOSTED DISPLAY FONTS ======================================== */
+@font-face {
+  font-family: 'Britannic Bold';
+  src: url('fonts/britannic_bold_regular.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'American Captain';
+  src: url('fonts/american_captain.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Libre Franklin Local';
+  src: url('fonts/libre_franklin_bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* === UI + EDITORIAL FONTS (Google Fonts) =============================
+   Include in <head>:
+   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&family=Roboto+Slab:wght@400;500&family=Libre+Franklin:wght@400;600;700&display=swap" rel="stylesheet">
+   ===================================================================== */
+
+:root {
+  /* ---------------------------------------------------------------------
+     PRIMARY BRAND COLORS — locked. Never change.
+     --------------------------------------------------------------------- */
+  --mc-purple:          #69428A;   /* structure: headers, footers, buttons, chrome */
+  --mc-teal:            #108A81;   /* storytelling: horse names, CTAs — logo left horse NEVER changes */
+  --mc-black:           #000000;   /* body text on light backgrounds */
+  --mc-gold:            #725604;   /* deep accent — awards, dark highlights */
+  --mc-off-white:       #F9F8F8;   /* light backgrounds, replaces black on dark */
+
+  /* ---------------------------------------------------------------------
+     EXTENDED PALETTE
+     --------------------------------------------------------------------- */
+  --mc-teal-light:      #8CD4CF;   /* tinted bg, hover, Adoptable status */
+  --mc-teal-bright:     #14A99F;   /* CTAs, links on white */
+  --mc-purple-light:    #B4A0C5;   /* tinted bg, disabled */
+  --mc-gray-mid:        #585858;   /* secondary text, captions */
+  --mc-gray-warm:       #D7CCCC;   /* dividers, subtle bg */
+
+  /* ---------------------------------------------------------------------
+     RECOMMENDED ADDITIONS (per brand v1.0)
+     --------------------------------------------------------------------- */
+  --mc-purple-deep:     #2C1A3E;   /* dark surfaces, slide headers, footer top */
+  --mc-teal-whisper:    #E8F7F6;   /* alternating light section bg */
+  --mc-purple-whisper:  #F5F0FA;   /* alternating light section bg */
+  --mc-gold-bright:     #C9A84C;   /* readable gold for awards / Eternal type */
+  --mc-navy:            #1A1A2E;   /* darkest scrims, app tab bars */
+
+  /* ---------------------------------------------------------------------
+     HORSE STATUS COLORS — drive utility-bar + bio-section backgrounds
+     --------------------------------------------------------------------- */
+  --mc-status-eternal:   #ACACAC;  /* granite — headstones */
+  --mc-status-rehab:     #69A1DA;  /* sky blue — healing */
+  --mc-status-retired:   #83CFA3;  /* grass green — peaceful pasture */
+  --mc-status-adoptable: #8CD4CF;  /* brand teal-light — new chapter */
+  --mc-status-adopted:   #B9F7F2;  /* light cyan — celebratory */
+  --mc-status-default:   #69428A;  /* fallback — brand purple */
+
+  /* ---------------------------------------------------------------------
+     SEMANTIC ROLES — reach for these in product code, not the raw hexes
+     --------------------------------------------------------------------- */
+  --mc-bg:              var(--mc-off-white);
+  --mc-bg-alt:          #ffffff;
+  --mc-bg-whisper-teal: var(--mc-teal-whisper);
+  --mc-bg-whisper-purp: var(--mc-purple-whisper);
+  --mc-bg-dark:         var(--mc-purple-deep);
+
+  --mc-fg:              var(--mc-black);          /* body */
+  --mc-fg-muted:        var(--mc-gray-mid);       /* captions, meta */
+  --mc-fg-on-dark:      var(--mc-off-white);
+  --mc-fg-link:         var(--mc-teal-bright);
+
+  --mc-heading:         var(--mc-purple);         /* H1–H4 */
+  --mc-accent:          var(--mc-teal);           /* horse names, pull quotes */
+  --mc-accent-soft:     var(--mc-teal-light);
+
+  --mc-border:          var(--mc-gray-warm);
+  --mc-border-strong:   var(--mc-purple);
+
+  --mc-focus-ring:      rgba(105, 66, 138, 0.45); /* purple at 45% */
+
+  /* ---------------------------------------------------------------------
+     TYPOGRAPHY — families
+     --------------------------------------------------------------------- */
+  --mc-font-display:    'Britannic Bold', 'Libre Franklin', Georgia, serif;
+  --mc-font-military:   'American Captain', 'Oswald', 'Arial Narrow', sans-serif;
+  --mc-font-franklin:   'Libre Franklin Local', 'Libre Franklin', system-ui, sans-serif;
+  --mc-font-primary:    'Roboto', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mc-font-slab:       'Roboto Slab', Georgia, serif;
+
+  /* ---------------------------------------------------------------------
+     TYPOGRAPHY — semantic roles (desktop)
+     mobile-first: see media query at bottom for small-screen sizes
+     --------------------------------------------------------------------- */
+  --mc-text-h1-size:    56px;   --mc-text-h1-weight: 600;   --mc-text-h1-lh: 1.08;
+  --mc-text-h2-size:    40px;   --mc-text-h2-weight: 600;   --mc-text-h2-lh: 1.15;
+  --mc-text-h3-size:    28px;   --mc-text-h3-weight: 600;   --mc-text-h3-lh: 1.2;
+  --mc-text-h4-size:    20px;   --mc-text-h4-weight: 500;   --mc-text-h4-lh: 1.3;
+  --mc-text-h5-size:    18px;   --mc-text-h5-weight: 500;   --mc-text-h5-lh: 1.35;
+  --mc-text-h6-size:    14px;   --mc-text-h6-weight: 500;   --mc-text-h6-lh: 1.4;
+  --mc-text-body-size:  16px;   --mc-text-body-weight: 400; --mc-text-body-lh: 1.6;
+  --mc-text-caption:    14px;   --mc-text-caption-weight: 300;
+
+  /* button label: Roboto 900, uppercase, tracked */
+  --mc-text-btn-size:   13px;
+  --mc-text-btn-weight: 900;
+  --mc-text-btn-track:  0.08em;
+
+  /* display: Britannic Bold for hero / poster scale */
+  --mc-text-display:    96px;
+  --mc-text-display-lh: 0.95;
+  --mc-text-display-track: -0.01em;
+
+  /* ---------------------------------------------------------------------
+     SPACING — 4px base, named scale
+     --------------------------------------------------------------------- */
+  --mc-space-1:  4px;
+  --mc-space-2:  8px;
+  --mc-space-3:  12px;
+  --mc-space-4:  16px;
+  --mc-space-5:  24px;
+  --mc-space-6:  32px;
+  --mc-space-7:  48px;
+  --mc-space-8:  64px;
+  --mc-space-9:  96px;
+  --mc-space-10: 128px;
+
+  /* ---------------------------------------------------------------------
+     RADII — rounded, never sharp
+     --------------------------------------------------------------------- */
+  --mc-radius-sm:   6px;    /* buttons */
+  --mc-radius-md:   8px;    /* small cards */
+  --mc-radius-lg:   12px;   /* large cards, content containers, mobile hero cards */
+  --mc-radius-xl:   16px;   /* hero elements */
+  --mc-radius-pill: 999px;  /* social/mobile pill CTAs only */
+
+  /* ---------------------------------------------------------------------
+     SHADOWS — soft, photography-aware
+     --------------------------------------------------------------------- */
+  --mc-shadow-sm:   0 1px 2px rgba(44, 26, 62, 0.08);
+  --mc-shadow-md:   0 4px 12px rgba(44, 26, 62, 0.10);
+  --mc-shadow-lg:   0 12px 32px rgba(44, 26, 62, 0.14);
+  --mc-shadow-card: 0 2px 8px rgba(44, 26, 62, 0.08), 0 1px 2px rgba(44, 26, 62, 0.06);
+  --mc-shadow-photo-scrim: 0 -40px 40px -20px rgba(0,0,0,0.55) inset;
+
+  /* ---------------------------------------------------------------------
+     MOTION — gentle, never bouncy
+     --------------------------------------------------------------------- */
+  --mc-ease:           cubic-bezier(0.4, 0.0, 0.2, 1);
+  --mc-ease-out:       cubic-bezier(0.2, 0.7, 0.2, 1);
+  --mc-dur-fast:       120ms;
+  --mc-dur:            200ms;
+  --mc-dur-slow:       320ms;
+
+  /* ---------------------------------------------------------------------
+     LAYOUT
+     --------------------------------------------------------------------- */
+  --mc-container:      1200px;
+  --mc-container-wide: 1440px;
+  --mc-gutter:         24px;
+}
+
+/* === MOBILE SIZE OVERRIDES =========================================== */
+@media (max-width: 768px) {
+  :root {
+    --mc-text-h1-size: 34px;
+    --mc-text-h2-size: 24px;
+    --mc-text-h3-size: 21px;
+    --mc-text-display: 56px;
+  }
+}
+
+/* === BASE RESETS / NORMALIZED ROLES ================================== */
+.mc-reset, .mc-reset *, .mc-reset *::before, .mc-reset *::after { box-sizing: border-box; }
+
+/* Semantic helpers — apply via class, not auto on element tags so you can
+   opt-in inside un-styled hosts. */
+.mc-h1 { font-family: var(--mc-font-primary); font-size: var(--mc-text-h1-size); font-weight: var(--mc-text-h1-weight); line-height: var(--mc-text-h1-lh); color: var(--mc-heading); margin: 0; }
+.mc-h2 { font-family: var(--mc-font-primary); font-size: var(--mc-text-h2-size); font-weight: var(--mc-text-h2-weight); line-height: var(--mc-text-h2-lh); color: var(--mc-heading); margin: 0; }
+.mc-h3 { font-family: var(--mc-font-primary); font-size: var(--mc-text-h3-size); font-weight: var(--mc-text-h3-weight); line-height: var(--mc-text-h3-lh); color: var(--mc-heading); margin: 0; }
+.mc-h4 { font-family: var(--mc-font-primary); font-size: var(--mc-text-h4-size); font-weight: var(--mc-text-h4-weight); line-height: var(--mc-text-h4-lh); color: var(--mc-heading); margin: 0; }
+.mc-h5 { font-family: var(--mc-font-primary); font-size: var(--mc-text-h5-size); font-weight: var(--mc-text-h5-weight); line-height: var(--mc-text-h5-lh); color: var(--mc-fg-muted); margin: 0; }
+.mc-h6 { font-family: var(--mc-font-primary); font-size: var(--mc-text-h6-size); font-weight: var(--mc-text-h6-weight); line-height: var(--mc-text-h6-lh); color: var(--mc-fg-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 0; }
+
+.mc-body    { font-family: var(--mc-font-primary); font-size: var(--mc-text-body-size); font-weight: var(--mc-text-body-weight); line-height: var(--mc-text-body-lh); color: var(--mc-fg); }
+.mc-slab    { font-family: var(--mc-font-slab); font-size: var(--mc-text-body-size); font-weight: 400; line-height: 1.65; color: var(--mc-fg); }
+.mc-caption { font-family: var(--mc-font-primary); font-size: var(--mc-text-caption); font-weight: var(--mc-text-caption-weight); color: var(--mc-fg-muted); }
+
+/* DISPLAY — Britannic Bold, the brand thumb-stopper */
+.mc-display {
+  font-family: var(--mc-font-display);
+  font-size: var(--mc-text-display);
+  line-height: var(--mc-text-display-lh);
+  letter-spacing: var(--mc-text-display-track);
+  font-weight: 700;
+  color: var(--mc-heading);
+}
+
+/* Horse name in teal — the storytelling glyph */
+.mc-name {
+  font-family: var(--mc-font-display);
+  color: var(--mc-teal);
+}
+
+/* American Captain — secondary display, military stencil character */
+.mc-stencil {
+  font-family: var(--mc-font-military);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Pull quote — Roboto Slab + teal */
+.mc-pull-quote {
+  font-family: var(--mc-font-slab);
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--mc-teal);
+  border-left: 4px solid var(--mc-teal);
+  padding-left: var(--mc-space-4);
+  margin: 0;
+}
+
+/* Button label — uppercase, tracked Roboto 900 */
+.mc-btn-label {
+  font-family: var(--mc-font-primary);
+  font-size: var(--mc-text-btn-size);
+  font-weight: var(--mc-text-btn-weight);
+  letter-spacing: var(--mc-text-btn-track);
+  text-transform: uppercase;
+}
+
+/* Link */
+.mc-link {
+  color: var(--mc-fg-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  transition: color var(--mc-dur) var(--mc-ease);
+}
+.mc-link:hover { color: var(--mc-teal); }
