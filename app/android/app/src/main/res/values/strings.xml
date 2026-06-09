@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Feed Order Tracker</string>
+    <string name="title_activity_main">Feed Order Tracker</string>
+    <string name="package_name">org.manecharacters.feedordertracker</string>
+    <string name="custom_url_scheme">org.manecharacters.feedordertracker</string>
+</resources>
