@@ -65,6 +65,8 @@ jobs:
         run: npm test
 
       - name: Build web app
+        env:
+          VITE_APP_VERSION: ${{ steps.ver.outputs.name }}
         run: npm run build
 
       - name: Capacitor sync (bundle web assets into the native project)

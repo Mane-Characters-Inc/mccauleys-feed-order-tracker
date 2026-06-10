@@ -2,13 +2,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// Feed Order Tracker — offline-first PWA for Mane Characters.
+// Feed Order Tracker for Mane Characters.
+// The production deliverable is a Capacitor Android APK that bundles all
+// assets and runs offline natively, so a service worker is NOT needed and was
+// actively harmful: its cache shadowed app updates inside the WebView. We ship
+// a self-destroying service worker so any previously-installed SW unregisters
+// itself and clears its caches. (See also the unregister guard in main.tsx.)
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      selfDestroying: true,
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'fonts/*.ttf'],
       manifest: {
         name: 'Feed Order Tracker',
         short_name: 'Feed Order',
@@ -23,9 +28,6 @@ export default defineConfig({
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ttf,png,svg,woff,woff2}'],
       },
     }),
   ],

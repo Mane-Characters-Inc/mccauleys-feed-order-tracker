@@ -104,7 +104,7 @@ export function SettingsScreen({
             <span style={{ fontFamily: DISPLAY, fontSize: 30, color: C.teal, minWidth: 28, textAlign: 'right' }}>{settings.buffer}</span>
           </div>
           <div style={{ marginTop: 12 }}>{bufferControl}</div>
-          <div style={{ fontSize: 11.5, color: C.gray, marginTop: 8, lineHeight: 1.5 }}>The client’s rule of thumb is “add 2 to 4” — enough to last through next Thursday morning’s feeding.</div>
+          <div style={{ fontSize: 11.5, color: C.gray, marginTop: 8, lineHeight: 1.5 }}>The client’s rule of thumb is “add 2 to 4,” enough to last through next Thursday morning’s feeding.</div>
         </div>
       )}
 
@@ -149,7 +149,7 @@ export function SettingsScreen({
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '22px 0 10px' }}>
         <SectionLabel style={{ margin: 0 }}>McCauley’s contacts</SectionLabel>
-        <button onClick={saveAllContacts} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 0, cursor: 'pointer', color: C.teal, fontFamily: FONT, fontWeight: 700, fontSize: 13 }}><AppIcon name="userPlus" size={16} color={C.teal} /> Save all</button>
+        <button onClick={saveAllContacts} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 0, cursor: 'pointer', color: C.teal, fontFamily: FONT, fontWeight: 700, fontSize: 13 }}><AppIcon name="userPlus" size={16} color={C.teal} /> Save all to phone</button>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
         {(settings.contacts || []).map((c) => {
@@ -173,7 +173,7 @@ export function SettingsScreen({
           );
         })}
       </div>
-      <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>Numbers stay on this device. Call/Text just open your phone’s app pre-filled — you still tap to dial or send. The weekly order always texts the <b style={{ color: C.ink }}>order line</b>.</div>
+      <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>Numbers stay on this device. Call/Text just open your phone’s app pre-filled, so you still tap to dial or send. “Save all to phone” adds every contact that has a number to your address book. The weekly order always texts the <b style={{ color: C.ink }}>order line</b>.</div>
 
       <SectionLabel style={{ margin: '22px 0 10px' }}>Supplier links</SectionLabel>
       {block((settings.links || []).map((l, i) => (
@@ -211,7 +211,7 @@ export function SettingsScreen({
             <button onClick={() => { setDraft({ code: f.code, name: f.name, form: f.form || 'cubes', url: f.url || '' }); setFeedSheet(f.code); }} style={{ background: C.whisperP, border: 0, borderRadius: 8, height: 32, padding: '0 12px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: C.purple, fontFamily: FONT, fontWeight: 700, fontSize: 12 }}><AppIcon name="edit" size={14} color={C.purple} /> Manage</button>
           </div>
         )))}
-      <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>Order here sets the order in the text message. “Cubes” stays in every name. Removing a feed <b style={{ color: C.ink }}>archives</b> it — its past orders are always kept.</div>
+      <div style={{ fontSize: 11.5, color: C.gray, margin: '8px 4px 0', lineHeight: 1.5 }}>Order here sets the order in the text message. Removing a feed <b style={{ color: C.ink }}>archives</b> it, and its past orders are always kept.</div>
 
       {archived.length > 0 && (<>
         <SectionLabel style={{ margin: '22px 0 10px' }}>Archived feeds</SectionLabel>
@@ -262,12 +262,16 @@ export function SettingsScreen({
           {editing && editing.active === false && (
             <div style={{ marginTop: 4, paddingTop: 14, borderTop: `1px solid ${C.warm}` }}>
               <SectionLabel style={{ color: C.alert }}>Delete permanently</SectionLabel>
-              <p style={{ fontSize: 12.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, margin: '0 0 11px' }}>This erases <b style={{ color: C.ink }}>{editing.name}</b> from every past week and export too — it can’t be undone. Reactivate instead if you might use it again. <b style={{ color: C.ink }}>Press and hold</b> to confirm.</p>
+              <p style={{ fontSize: 12.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, margin: '0 0 11px' }}>This erases <b style={{ color: C.ink }}>{editing.name}</b> from every past week and export too, and it can’t be undone. Reactivate instead if you might use it again. <b style={{ color: C.ink }}>Press and hold</b> to confirm.</p>
               <HoldButton icon="trash" onConfirm={() => deleteFeedForever(editing.code)}>Hold to delete forever</HoldButton>
             </div>
           )}
         </div>
       </Sheet>
+
+      <div style={{ textAlign: 'center', marginTop: 26, fontSize: 11.5, color: C.gray, fontFamily: FONT }}>
+        Feed Order Tracker v{import.meta.env.VITE_APP_VERSION || 'dev'}
+      </div>
     </div>
   );
 }

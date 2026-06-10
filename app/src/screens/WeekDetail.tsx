@@ -32,7 +32,7 @@ export function WeekDetail({
       {editing && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '9px 12px', background: '#F7EFD6', borderRadius: 9, marginBottom: 12 }}>
           <AppIcon name="info" size={15} color="#8a6d12" />
-          <span style={{ fontSize: 12, color: '#8a6d12', fontFamily: FONT, fontWeight: 600 }}>Fixing a past entry won’t recompute later weeks — they keep their saved numbers.</span>
+          <span style={{ fontSize: 12, color: '#8a6d12', fontFamily: FONT, fontWeight: 600 }}>Fixing a past entry won’t recompute later weeks; they keep their saved numbers.</span>
         </div>
       )}
       <div style={{ background: C.white, borderRadius: 12, boxShadow: '0 2px 8px rgba(44,26,62,0.07)', overflow: 'hidden', marginBottom: 14 }}>
@@ -55,11 +55,11 @@ export function WeekDetail({
                 <td style={{ ...rowLabel, background: C.whisperT, color: C.teal }}>Have</td>
                 {feeds.map((f) => <td key={f.code} style={td}>{editing
                   ? <input type="number" value={week.feeds[f.code].have ?? ''} onChange={(e) => setF(f.code, 'have', e.target.value === '' ? null : Number(e.target.value))} style={inputCell} />
-                  : (week.feeds[f.code].have ?? '—')}</td>)}
+                  : (week.feeds[f.code].have ?? '–')}</td>)}
               </tr>
               <tr style={{ borderBottom: '1px solid rgba(44,26,62,0.05)' }}>
                 <td style={rowLabel}>Used</td>
-                {feeds.map((f) => { const u = calcUsed(week.feeds[f.code]); return <td key={f.code} style={{ ...td, color: C.ink, fontWeight: 600 }}>{u === null ? '—' : u}</td>; })}
+                {feeds.map((f) => { const u = calcUsed(week.feeds[f.code]); return <td key={f.code} style={{ ...td, color: C.ink, fontWeight: 600 }}>{u === null ? '–' : u}</td>; })}
               </tr>
               <tr style={{ background: C.whisperP }}>
                 <td style={{ ...rowLabel, background: C.whisperP, color: C.purple }}>Order</td>
@@ -88,14 +88,14 @@ export function WeekDetail({
       {!editing && !isActive && (
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${C.warm}` }}>
           <SectionLabel style={{ color: C.alert }}>Remove this week</SectionLabel>
-          <p style={{ fontSize: 12.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, margin: '0 0 11px' }}>Deletes this week’s record for good. Later weeks keep their saved numbers. <b style={{ color: C.ink }}>Press and hold</b> the button — a quick tap won’t do it.</p>
+          <p style={{ fontSize: 12.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, margin: '0 0 11px' }}>Deletes this week’s record for good. Later weeks keep their saved numbers. <b style={{ color: C.ink }}>Press and hold</b> the button; a quick tap won’t do it.</p>
           <HoldButton icon="trash" onConfirm={() => onDelete(week.id)}>Hold to delete this week</HoldButton>
         </div>
       )}
       {!editing && isActive && (
         <div style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'center', padding: '9px 12px', background: C.whisperP, borderRadius: 9 }}>
           <AppIcon name="info" size={15} color={C.purple} />
-          <span style={{ fontSize: 12, color: C.gray, fontFamily: FONT }}>This is the current week — finish or send it before it can be deleted.</span>
+          <span style={{ fontSize: 12, color: C.gray, fontFamily: FONT }}>This is the current week. Finish or send it before it can be deleted.</span>
         </div>
       )}
     </div>

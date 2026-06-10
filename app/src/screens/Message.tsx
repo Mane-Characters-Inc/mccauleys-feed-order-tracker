@@ -41,7 +41,7 @@ export function MessageScreen({
       </div>
 
       {/* editable message bubble */}
-      <SectionLabel style={{ margin: '2px 2px 8px' }}>Message — tap to edit</SectionLabel>
+      <SectionLabel style={{ margin: '2px 2px 8px' }}>Message (tap to edit)</SectionLabel>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div style={{ position: 'relative', maxWidth: '94%', width: '100%' }}>
           <textarea value={text} onChange={(e) => onText(e.target.value)}
@@ -76,7 +76,7 @@ export function MessageScreen({
 
       {/* native Messages handoff sheet */}
       <Sheet open={sending} title="Send to supplier" onClose={() => setSending(false)}>
-        <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>This opens your phone’s Messages app with the order pre-filled to <b style={{ color: C.ink }}>{orderC.name}</b> ({orderC.phone || 'no number set'}). You send it from there — no connection needed in the app.</p>
+        <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>This opens your phone’s Messages app with the order pre-filled to <b style={{ color: C.ink }}>{orderC.name}</b> ({orderC.phone || 'no number set'}). You send it from there, no connection needed in the app.</p>
         <div style={{ background: C.whisperP, borderRadius: 12, padding: '12px 14px', fontFamily: FONT, fontSize: 13.5, color: C.ink, lineHeight: 1.5, whiteSpace: 'pre-wrap', maxHeight: 170, overflow: 'auto' }}>{text}</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 14 }}>
           <a

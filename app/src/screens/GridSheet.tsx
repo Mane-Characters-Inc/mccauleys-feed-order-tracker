@@ -41,11 +41,11 @@ export function GridSheet({
             </tr>
             <tr>
               <td style={rowLabel}>Used</td>
-              {feeds.map((f) => { const u = calcUsed(week.feeds[f.code]); return <td key={f.code} style={{ ...cellStyle, color: C.ink, fontWeight: 600 }}>{u === null ? '—' : u}</td>; })}
+              {feeds.map((f) => { const u = calcUsed(week.feeds[f.code]); return <td key={f.code} style={{ ...cellStyle, color: C.ink, fontWeight: 600 }}>{u === null ? '–' : u}</td>; })}
             </tr>
             <tr>
               <td style={rowLabel}>Suggested</td>
-              {feeds.map((f) => { const s = calcSuggested(week.feeds[f.code], buffer); return <td key={f.code} style={{ ...cellStyle, color: C.teal, fontWeight: 700 }}>{s === null ? '—' : s}</td>; })}
+              {feeds.map((f) => { const s = calcSuggested(week.feeds[f.code], buffer); return <td key={f.code} style={{ ...cellStyle, color: C.teal, fontWeight: 700 }}>{s === null ? '–' : s}</td>; })}
             </tr>
             <tr style={{ background: C.whisperP }}>
               <td style={{ ...rowLabel, background: C.whisperP, color: C.purple }}>Order</td>

@@ -128,8 +128,8 @@ export const DEFAULT_FEEDS: Feed[] = [
    editable in Settings for privacy. Office/text default to McCauley's real
    numbers; the nutritionist slot ships empty (no name, no number). */
 export const DEFAULT_CONTACTS: Contact[] = [
-  { id: 'orderText', name: "McCauley's Feed — Orders", role: 'Order text line', phone: '(859) 537-2418', canCall: false, canText: true },
-  { id: 'office', name: "McCauley's Feed — Office", role: 'Office', phone: '(859) 873-3333', canCall: true, canText: false },
+  { id: 'orderText', name: "McCauley's Feed (Orders)", role: 'Order text line', phone: '(859) 537-2418', canCall: false, canText: true },
+  { id: 'office', name: "McCauley's Feed (Office)", role: 'Office', phone: '(859) 873-3333', canCall: true, canText: false },
   { id: 'nutritionist', name: '', role: 'Nutritionist, McCauley’s', phone: '', canCall: true, canText: true },
 ];
 

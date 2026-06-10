@@ -73,7 +73,7 @@ export function ThisWeekScreen({
       <div style={{ display: 'flex', gap: 9, alignItems: 'flex-start', margin: '11px 2px 4px' }}>
         <AppIcon name="truck" size={16} color={C.teal} style={{ marginTop: 1, flexShrink: 0 }} />
         <div style={{ fontSize: 12, color: C.gray, lineHeight: 1.5, fontFamily: FONT }}>
-          Delivery arrives <b style={{ color: C.ink }}>Thursday</b>. Size each order to last through <b style={{ color: C.ink }}>next Thursday morning’s feeding</b> — about 8 days. That’s what the safety buffer covers.
+          Delivery arrives <b style={{ color: C.ink }}>Thursday</b>. Size each order to last through <b style={{ color: C.ink }}>next Thursday morning’s feeding</b>, about 8 days. That’s what the safety buffer covers.
         </div>
       </div>
 
@@ -114,7 +114,7 @@ export function ThisWeekScreen({
         {showOilReminder && lastOil && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12, padding: '9px 12px', background: '#F7EFD6', borderRadius: 9 }}>
             <AppIcon name="info" size={15} color="#8a6d12" />
-            <span style={{ fontSize: 12, color: '#8a6d12', fontFamily: FONT, fontWeight: 600 }}>Last ordered {fmtSlash(lastOil.date)} — running low?</span>
+            <span style={{ fontSize: 12, color: '#8a6d12', fontFamily: FONT, fontWeight: 600 }}>Last ordered {fmtSlash(lastOil.date)}. Running low?</span>
           </div>
         )}
       </div>
@@ -163,7 +163,7 @@ export function ThisWeekScreen({
       </Sheet>
 
       {/* carried-counts sheet */}
-      <Sheet open={!!editFeed} title={editFeed ? `Adjust — ${editFeed.name}` : ''} onClose={() => setSheet(null)}>
+      <Sheet open={!!editFeed} title={editFeed ? `Adjust: ${editFeed.name}` : ''} onClose={() => setSheet(null)}>
         {editFeed && (() => {
           const c = week.feeds[editFeed.code];
           return (

@@ -52,11 +52,11 @@ export function FeedCard({
       <div style={{ display: 'flex', gap: 18, padding: '11px 16px 0', fontFamily: FONT }}>
         <div style={{ fontSize: 13 }}>
           <span style={{ color: C.gray }}>Used </span>
-          <b style={{ color: C.ink }}>{used === null ? '—' : used}</b>
+          <b style={{ color: C.ink }}>{used === null ? '–' : used}</b>
         </div>
         <div style={{ fontSize: 13 }}>
           <span style={{ color: C.gray }}>Suggests </span>
-          <b style={{ color: C.teal }}>{suggested === null ? '—' : suggested}</b>
+          <b style={{ color: C.teal }}>{suggested === null ? '–' : suggested}</b>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export function FeedCard({
       {odd && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '-4px 15px 13px', padding: '9px 12px', background: C.alertSoft, borderRadius: 9 }}>
           <AppIcon name="warn" size={16} color={C.alert} />
-          <span style={{ fontSize: 12, color: C.alert, fontFamily: FONT, fontWeight: 600 }}>Odd number — can’t be split evenly between the two accounts.</span>
+          <span style={{ fontSize: 12, color: C.alert, fontFamily: FONT, fontWeight: 600 }}>Odd number, can’t be split evenly between the two accounts.</span>
         </div>
       )}
     </div>

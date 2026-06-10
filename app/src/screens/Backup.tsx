@@ -32,7 +32,7 @@ export function BackupScreen({
       toast('Couldn’t read that JSON');
     }
   };
-  const doReset = () => { const s = resetState(); setState(s); toast('Reset — fresh start'); };
+  const doReset = () => { const s = resetState(); setState(s); toast('Reset to a fresh start'); };
   const shareExport = async (filename: string, text: string, type: string, label: string) => {
     const r = await shareOrDownload(filename, text, type);
     toast(r === 'shared' ? `${label} shared` : r === 'downloaded' ? `${label} exported` : 'Export failed');
@@ -63,8 +63,8 @@ export function BackupScreen({
 
       <SectionLabel>Export</SectionLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-        {card('download', 'Export as JSON', 'Complete data — every week, setting & message', <AppButton variant="soft" onClick={() => shareExport('feed-tracker-backup.json', json, 'application/json', 'JSON')}>Share</AppButton>)}
-        {card('download', 'Export as CSV', 'One row per feed per week — opens in Excel', <AppButton variant="soft" onClick={() => shareExport('feed-tracker.csv', csv, 'text/csv', 'CSV')}>Share</AppButton>)}
+        {card('download', 'Export as JSON', 'Complete data: every week, setting & message', <AppButton variant="soft" onClick={() => shareExport('feed-tracker-backup.json', json, 'application/json', 'JSON')}>Share</AppButton>)}
+        {card('download', 'Export as CSV', 'One row per feed per week, opens in Excel', <AppButton variant="soft" onClick={() => shareExport('feed-tracker.csv', csv, 'text/csv', 'CSV')}>Share</AppButton>)}
         {card('upload', 'Import / Restore', 'Bring back a JSON backup', <AppButton variant="soft" onClick={() => setImportOpen(true)}>Restore</AppButton>)}
       </div>
 
