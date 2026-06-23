@@ -95,6 +95,14 @@ describe('worksheet entry', () => {
     expect(screen.getAllByText(/can’t be split evenly/i).length).toBeGreaterThan(0);
   });
 
+  it('sending off the order date asks to confirm (early-send guard)', () => {
+    seedHistory(); // current week dated 6/16, which is not today
+    render(<App />);
+    fireEvent.click(screen.getByText('Review order message'));
+    fireEvent.click(screen.getByText('Send via text'));
+    expect(screen.getByText('Not the order date')).toBeTruthy();
+  });
+
   it('Reset this week clears Have to 0 behind a confirm sheet', () => {
     seedHistory();
     render(<App />);

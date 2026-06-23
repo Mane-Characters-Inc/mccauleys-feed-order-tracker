@@ -26,7 +26,7 @@ export function ThisWeekScreen({
   const setEntry = (code: string, v: number | null) => mutate((s) => { const c = last(s).feeds[code]; c.have = v; if (!c.overridden) c.orderSent = null; });
   const setOrder = (code: string, v: number | null) => mutate((s) => { const c = last(s).feeds[code]; c.orderSent = v; c.overridden = true; });
   const revert = (code: string) => mutate((s) => { const c = last(s).feeds[code]; c.overridden = false; c.orderSent = null; });
-  const setCarried = (code: string, field: 'had' | 'ordered', v: number | null) => mutate((s) => { last(s).feeds[code][field] = Math.max(0, v || 0); });
+  const setCarried = (code: string, field: 'had' | 'ordered', v: number | null) => mutate((s) => { const c = last(s).feeds[code]; c[field] = Math.max(0, v || 0); c.carriedEdited = true; });
   const setOil = (patch: Partial<Oil>) => mutate((s) => { Object.assign(last(s).oil, patch); });
   const setDate = (iso: string) => mutate((s) => { const w = last(s); w.date = iso; w.id = iso; });
   // Reset this week's entries: have today -> 0 and clear order overrides, so
@@ -191,7 +191,7 @@ export function ThisWeekScreen({
           const c = week.feeds[editFeed.code];
           return (
             <div>
-              <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>These carried forward from last week. Edit only if a count was off or feed came in outside the normal order.</p>
+              <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>These come from last week automatically. Change them only if a count was off or feed came in outside the normal order. A manual change here stops the automatic update for this feed.</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: `1px solid ${C.warm}` }}>
                 <div><div style={{ fontWeight: 600, color: C.ink, fontFamily: FONT }}>Had last week</div><div style={{ fontSize: 12, color: C.gray }}>Bags on hand at the last order</div></div>
                 <Stepper value={c.had} onChange={(v) => setCarried(editFeed.code, 'had', v)} accent={C.purple} />

@@ -16,6 +16,9 @@ export interface FeedCell {
   have: number | null;
   orderSent: number | null;
   overridden: boolean;
+  /** True if the user manually changed the carried Had/Ordered for this cell.
+      When set, live carry-forward leaves it alone (see syncCarriedForward). */
+  carriedEdited?: boolean;
 }
 
 /** Physical form of a feed. Mane Characters uses cubes by default, but each
@@ -405,7 +408,7 @@ export function normalizeState(state: AppState | null | undefined): AppState {
 export function loadState(): AppState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return normalizeState(JSON.parse(raw));
+    if (raw) return syncCarriedForward(normalizeState(JSON.parse(raw)));
   } catch {
     /* ignore — fall through to a clean start */
   }
@@ -425,6 +428,27 @@ export function resetState(): AppState {
     /* no-op */
   }
   return initialState();
+}
+
+/* ---- live carry-forward (current, not-yet-sent week) -------------- */
+// Keep the current week's carried Had/Ordered in sync with the previous week,
+// so fixing last week's counts flows forward automatically. Only the latest,
+// not-yet-sent week is touched; sent/past weeks stay frozen. A cell the user
+// manually adjusted (carriedEdited) is left alone. Mutates + returns `state`.
+export function syncCarriedForward(state: AppState): AppState {
+  const n = state.weeks.length;
+  if (n < 2) return state;
+  const cur = state.weeks[n - 1];
+  if (cur.sent) return state;
+  const prev = state.weeks[n - 2];
+  state.settings.feeds.forEach((f) => {
+    const c = cur.feeds[f.code];
+    const p = prev.feeds[f.code];
+    if (!c || !p || c.carriedEdited) return;
+    c.had = p.have ?? 0;
+    c.ordered = orderQty(p, state.settings.buffer);
+  });
+  return state;
 }
 
 /* ---- start a new week (carry-forward, spec §4.3) ------------------ */

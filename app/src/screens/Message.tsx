@@ -4,7 +4,7 @@ import { C, FONT } from '../ui/tokens';
 import { AppIcon } from '../ui/icons';
 import { Chip, SectionLabel, AppButton, Sheet } from '../ui/primitives';
 import { ContactCard } from '../ui/ContactCard';
-import { composeMessage, orderContact, smsHref, fmtSlash, saveState, type AppState } from '../lib/data';
+import { composeMessage, orderContact, smsHref, fmtSlash, fmtLong, toISO, parseISO, saveState, type AppState } from '../lib/data';
 import { copyText } from '../lib/platform';
 
 export function MessageScreen({
@@ -18,8 +18,15 @@ export function MessageScreen({
   const edited = week.messageEdited && week.message != null;
   const text = edited ? (week.message as string) : composed;
   const [sending, setSending] = useState(false);
+  const [earlyConfirm, setEarlyConfirm] = useState(false);
   const orderC = orderContact(settings);
   const others = (settings.contacts || []).filter((c) => c.id !== 'orderText');
+
+  // Is today different from the order date? (Catches sending early / off-day.)
+  const todayISO = toISO(new Date());
+  const offDate = todayISO !== week.date;
+  const daysToOrder = Math.round((+parseISO(week.date) - +parseISO(todayISO)) / 864e5);
+  const beginSend = () => { if (offDate && !week.sent) setEarlyConfirm(true); else setSending(true); };
 
   const mutate = (fn: (s: AppState) => void) => { const s: AppState = JSON.parse(JSON.stringify(state)); fn(s); saveState(s); setState(s); };
   const last = (s: AppState) => s.weeks[s.weeks.length - 1];
@@ -56,7 +63,7 @@ export function MessageScreen({
 
       {/* actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 18 }}>
-        {!week.sent && <AppButton variant="teal" full size="lg" icon="send" onClick={() => setSending(true)}>Send via text</AppButton>}
+        {!week.sent && <AppButton variant="teal" full size="lg" icon="send" onClick={beginSend}>Send via text</AppButton>}
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}><AppButton variant="soft" full icon="copy" onClick={copy}>Copy</AppButton></div>
           <div style={{ flex: 1 }}><AppButton variant="soft" full icon="refresh" onClick={rebuild} disabled={!edited}>Rebuild</AppButton></div>
@@ -87,6 +94,23 @@ export function MessageScreen({
             <AppIcon name="send" size={17} color={C.off} stroke={2.2} /> Open Messages &amp; mark sent
           </a>
           <AppButton variant="ghost" full onClick={() => setSending(false)}>Cancel</AppButton>
+        </div>
+      </Sheet>
+
+      {/* early / off-date send confirmation */}
+      <Sheet open={earlyConfirm} title="Not the order date" onClose={() => setEarlyConfirm(false)}>
+        <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>
+          Today is <b style={{ color: C.ink }}>{fmtLong(todayISO)}</b>, but this order is dated <b style={{ color: C.ink }}>{fmtLong(week.date)}</b>
+          {daysToOrder > 0
+            ? `, ${daysToOrder} day${daysToOrder === 1 ? '' : 's'} from now`
+            : daysToOrder < 0
+              ? `, which has already passed`
+              : ''}. Send it now anyway?
+        </p>
+        <p style={{ fontSize: 12.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5 }}>If you meant to order on a different day, tap Cancel and adjust the order date on the worksheet first.</p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          <div style={{ flex: 1 }}><AppButton variant="ghost" full onClick={() => setEarlyConfirm(false)}>Cancel</AppButton></div>
+          <div style={{ flex: 1 }}><AppButton variant="primary" full icon="send" onClick={() => { setEarlyConfirm(false); setSending(true); }}>Send anyway</AppButton></div>
         </div>
       </Sheet>
     </div>

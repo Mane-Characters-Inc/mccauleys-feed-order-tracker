@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calcUsed, calcSuggested, orderQty, composeMessage,
   numToWords, roundUpEven, joinList, startNewWeek, isOdd, formatUsPhone,
-  feedFullName, initialState, nextTuesday,
+  feedFullName, initialState, nextTuesday, syncCarriedForward,
   type AppState, type Week,
 } from './data';
 import { sampleHistory } from './sampleHistory.fixture';
@@ -184,6 +184,36 @@ describe('feed model — base name + form word', () => {
     expect(feeds.map((f) => f.name)).toEqual(['Top Breeder', 'Original 14', 'M10 Balancer', 'Alam']);
     expect(feeds.every((f) => f.form === 'cubes')).toBe(true);
     expect(feedFullName(feeds[0])).toBe('Top Breeder cubes');
+  });
+});
+
+describe('live carry-forward (syncCarriedForward)', () => {
+  it('current unsent week tracks the prior week’s have', () => {
+    const s = sampleHistory(); // last week 6/16 (unsent), prior 6/9
+    const prev = s.weeks.find((w) => w.date === '2026-06-09')!;
+    prev.feeds.tb.have = 9; // was 2
+    syncCarriedForward(s);
+    expect(s.weeks[s.weeks.length - 1].feeds.tb.had).toBe(9);
+  });
+
+  it('leaves a manually adjusted (carriedEdited) cell alone', () => {
+    const s = sampleHistory();
+    const cur = s.weeks[s.weeks.length - 1];
+    cur.feeds.tb.had = 4;
+    cur.feeds.tb.carriedEdited = true;
+    s.weeks.find((w) => w.date === '2026-06-09')!.feeds.tb.have = 9;
+    syncCarriedForward(s);
+    expect(cur.feeds.tb.had).toBe(4); // not overwritten
+  });
+
+  it('does not touch a sent current week', () => {
+    const s = sampleHistory();
+    const cur = s.weeks[s.weeks.length - 1];
+    cur.sent = true;
+    const before = cur.feeds.tb.had;
+    s.weeks[s.weeks.length - 2].feeds.tb.have = 99;
+    syncCarriedForward(s);
+    expect(cur.feeds.tb.had).toBe(before);
   });
 });
 

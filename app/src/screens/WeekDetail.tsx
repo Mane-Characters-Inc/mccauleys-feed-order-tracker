@@ -5,7 +5,7 @@ import { AppIcon } from '../ui/icons';
 import { SectionLabel, AppButton, Chip, HoldButton } from '../ui/primitives';
 import {
   weekFeedList, calcUsed, orderQty, composeMessage, shortLabel, ACCOUNT_LABEL,
-  saveState, type AppState, type Week,
+  saveState, syncCarriedForward, type AppState, type Week,
 } from '../lib/data';
 
 export function WeekDetail({
@@ -17,7 +17,9 @@ export function WeekDetail({
   const feeds = weekFeedList(week, settings);
   const isActive = state.weeks[state.weeks.length - 1].id === week.id;
   const [editing, setEditing] = useState(false);
-  const mutate = (fn: (s: AppState) => void) => { const s: AppState = JSON.parse(JSON.stringify(state)); fn(s); saveState(s); setState(s); };
+  // Editing a past week can change what the current (unsent) week carries in,
+  // so re-sync carry-forward after every edit.
+  const mutate = (fn: (s: AppState) => void) => { const s: AppState = JSON.parse(JSON.stringify(state)); fn(s); syncCarriedForward(s); saveState(s); setState(s); };
   const idx = state.weeks.findIndex((w) => w.id === week.id);
   const setF = (code: string, field: 'had' | 'ordered' | 'have' | 'orderSent', v: number | null) =>
     mutate((s) => { (s.weeks[idx].feeds[code][field] as number | null) = field === 'have' ? v : Math.max(0, v || 0); });

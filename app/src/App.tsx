@@ -10,7 +10,7 @@ import { MessageScreen } from './screens/Message';
 import { HistoryScreen } from './screens/History';
 import { BackupScreen } from './screens/Backup';
 import { SettingsScreen } from './screens/Settings';
-import { loadState, saveState, startNewWeek, type AppState } from './lib/data';
+import { loadState, saveState, startNewWeek, syncCarriedForward, type AppState } from './lib/data';
 import { syncOrderReminder } from './lib/notifications';
 
 const UI_KEY = 'mc_feed_tracker_ui';
@@ -50,6 +50,7 @@ export function App() {
   const setBuffer = (v: number) => {
     const s: AppState = JSON.parse(JSON.stringify(state));
     s.settings.buffer = Math.max(0, Math.round(v));
+    syncCarriedForward(s); // carried Ordered depends on the buffer
     saveState(s);
     setState(s);
   };
