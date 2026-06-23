@@ -75,7 +75,7 @@ export function App() {
     content = <MessageScreen state={state} setState={setState} onBack={() => setView(null)} onSent={() => { setView(null); setTab('week'); toast('Order marked sent'); }} toast={toast} />;
   } else if (tab === 'week') {
     title = 'Feed Order'; subtitle = 'Weekly · McCauley’s';
-    content = <ThisWeekScreen state={state} setState={setState} layout={ui.layout} overrideColor={overrideColor} oilReminder={ui.oilReminder} onReview={() => setView('message')} onStartNext={startNext} />;
+    content = <ThisWeekScreen state={state} setState={setState} layout={ui.layout} overrideColor={overrideColor} oilReminder={ui.oilReminder} onReview={() => setView('message')} onStartNext={startNext} toast={toast} />;
   } else if (tab === 'history') {
     title = 'History'; subtitle = 'Every past order';
     content = <HistoryScreen state={state} setState={setState} toast={toast} />;

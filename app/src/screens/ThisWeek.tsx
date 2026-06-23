@@ -11,14 +11,15 @@ import {
 } from '../lib/data';
 
 export function ThisWeekScreen({
-  state, setState, layout, overrideColor, oilReminder, onReview, onStartNext,
+  state, setState, layout, overrideColor, oilReminder, onReview, onStartNext, toast,
 }: {
   state: AppState; setState: (s: AppState) => void; layout: 'cards' | 'grid'; overrideColor: string;
-  oilReminder: boolean; onReview: () => void; onStartNext: () => void;
+  oilReminder: boolean; onReview: () => void; onStartNext: () => void; toast: (m: string) => void;
 }) {
   const week = state.weeks[state.weeks.length - 1];
   const { settings } = state;
   const [sheet, setSheet] = useState<string | null>(null); // 'date' | feedCode for carried
+  const [confirmReset, setConfirmReset] = useState(false);
 
   const mutate = (fn: (s: AppState) => void) => { const s: AppState = JSON.parse(JSON.stringify(state)); fn(s); saveState(s); setState(s); };
   const last = (s: AppState) => s.weeks[s.weeks.length - 1];
@@ -28,6 +29,21 @@ export function ThisWeekScreen({
   const setCarried = (code: string, field: 'had' | 'ordered', v: number | null) => mutate((s) => { last(s).feeds[code][field] = Math.max(0, v || 0); });
   const setOil = (patch: Partial<Oil>) => mutate((s) => { Object.assign(last(s).oil, patch); });
   const setDate = (iso: string) => mutate((s) => { const w = last(s); w.date = iso; w.id = iso; });
+  // Reset this week's entries: have today -> 0 and clear order overrides, so
+  // each order reverts to the suggestion (used + buffer, rounded up to even).
+  const resetWeek = () => {
+    mutate((s) => {
+      const w = last(s);
+      Object.keys(w.feeds).forEach((code) => {
+        const c = w.feeds[code];
+        c.have = 0;
+        c.orderSent = null;
+        c.overridden = false;
+      });
+    });
+    setConfirmReset(false);
+    toast('This week reset');
+  };
 
   // active feeds present in this week (archived feeds drop off going forward)
   const wkFeeds = activeFeeds(settings).filter((f) => week.feeds[f.code] !== undefined);
@@ -154,6 +170,13 @@ export function ThisWeekScreen({
         </div>
       </div>
 
+      {/* reset this week */}
+      <div style={{ marginTop: 18, textAlign: 'center' }}>
+        <button onClick={() => setConfirmReset(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'none', border: 0, cursor: 'pointer', color: C.gray, fontFamily: FONT, fontWeight: 700, fontSize: 12.5, letterSpacing: '0.03em', padding: '8px 10px' }}>
+          <AppIcon name="refresh" size={15} color={C.gray} /> Reset this week
+        </button>
+      </div>
+
       {/* date sheet */}
       <Sheet open={sheet === 'date'} title="Order date" onClose={() => setSheet(null)}>
         <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>Orders go out every Tuesday. Adjust if this week is different.</p>
@@ -181,6 +204,22 @@ export function ThisWeekScreen({
             </div>
           );
         })()}
+      </Sheet>
+
+      {/* reset confirm sheet */}
+      <Sheet open={confirmReset} title="Reset this week?" onClose={() => setConfirmReset(false)}>
+        <p style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5, marginTop: 0 }}>
+          This clears your entries for <b style={{ color: C.ink }}>{fmtLong(week.date)}</b>:
+        </p>
+        <ul style={{ fontSize: 13.5, color: C.gray, fontFamily: FONT, lineHeight: 1.6, margin: '0 0 4px', paddingLeft: 18 }}>
+          <li>Every <b style={{ color: C.ink }}>Have today</b> goes back to 0.</li>
+          <li>Every <b style={{ color: C.ink }}>Order this week</b> resets to the suggested amount (what was used, plus the {settings.buffer}-bag safety buffer, rounded up to even).</li>
+        </ul>
+        <p style={{ fontSize: 12.5, color: C.gray, fontFamily: FONT, lineHeight: 1.5 }}>Carried <b style={{ color: C.ink }}>Had</b> / <b style={{ color: C.ink }}>Ordered</b> from last week, and past weeks, are not touched.</p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          <div style={{ flex: 1 }}><AppButton variant="ghost" full onClick={() => setConfirmReset(false)}>Cancel</AppButton></div>
+          <div style={{ flex: 1 }}><AppButton variant="primary" full icon="refresh" onClick={resetWeek}>Reset week</AppButton></div>
+        </div>
       </Sheet>
     </div>
   );

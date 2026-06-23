@@ -94,4 +94,16 @@ describe('worksheet entry', () => {
     fireEvent.change(spinbuttons[1], { target: { value: '7' } });
     expect(screen.getAllByText(/can’t be split evenly/i).length).toBeGreaterThan(0);
   });
+
+  it('Reset this week clears Have to 0 behind a confirm sheet', () => {
+    seedHistory();
+    render(<App />);
+    // confirm is required (deliberate, not accidental)
+    fireEvent.click(screen.getByText('Reset this week'));
+    expect(screen.getByText('Reset this week?')).toBeTruthy();
+    fireEvent.click(screen.getByText('Reset week'));
+    // first card's "Have today" stepper is now 0
+    const spin = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    expect(spin[0].value).toBe('0');
+  });
 });
